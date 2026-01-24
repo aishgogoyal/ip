@@ -100,6 +100,31 @@ public class Avo {
                 continue;
             }
 
+            // delete
+            if (userInput.startsWith("delete ")) {
+                try {
+                    int idx = Integer.parseInt(userInput.substring(7).trim()) - 1;
+
+                    if (idx < 0 || idx >= tasks.size()) {
+                        System.out.println("❗ That task number does not exist.");
+                        System.out.println("👉 Use: delete <task number> (between 1 and " + tasks.size() + ")");
+                        continue;
+                    }
+
+                    Task removed = tasks.remove(idx);
+                    System.out.println("🗑️ Noted. I've removed this task:");
+                    System.out.println("  " + removed);
+                    System.out.println("📌 Now you have " + tasks.size() + " tasks in the list.");
+                } catch (NumberFormatException e) {
+                    System.out.println("❗ The task number must be a number.");
+                    System.out.println("👉 Format: delete <task number>");
+                } catch (Exception e) {
+                    System.out.println("❗ Unable to delete task.");
+                    System.out.println("👉 Format: delete <task number>");
+                }
+                continue;
+            }
+
             // deadline
             if (userInput.startsWith("deadline ")) {
                 try {
@@ -197,6 +222,7 @@ public class Avo {
             System.out.println("   list");
             System.out.println("   mark <task number>");
             System.out.println("   unmark <task number>");
+            System.out.println("   delete <task number>");
             System.out.println("   bye");
         }
 
