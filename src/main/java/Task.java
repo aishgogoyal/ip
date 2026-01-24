@@ -1,6 +1,6 @@
 public class Task {
-    private String description;
-    private boolean isDone;
+    protected String description;
+    protected boolean isDone;
 
     public Task(String description) {
         this.description = description;
@@ -15,11 +15,13 @@ public class Task {
         isDone = false;
     }
 
-    public String toListString(int index) {
-        return index + ".[" + (isDone ? "X" : " ") + "] " + description;
+    public String status() {
+        return isDone ? "X" : " ";
     }
 
-    public String toStatusString() {
-        return "[" + (isDone ? "X" : " ") + "] " + description;
+    @Override
+    public String toString() {
+        return "[ ] " + description;
     }
 }
+
