@@ -1,5 +1,7 @@
 import java.util.Scanner;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.time.LocalDate;
 
 public class Avo {
 
@@ -169,7 +171,7 @@ public class Avo {
                         }
 
                         String desc = parts[0].trim();
-                        String by = parts[1].trim();
+                        LocalDate by = LocalDate.parse(parts[1].trim());
 
                         if (desc.isEmpty()) {
                             System.out.println("❗ The task description cannot be empty.");
