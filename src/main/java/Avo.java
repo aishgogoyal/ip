@@ -1,7 +1,7 @@
 import java.util.Scanner;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.time.LocalDate;
+
 
 public class Avo {
 
@@ -178,8 +178,9 @@ public class Avo {
                             System.out.println("👉 Format: deadline <task description> /by <time>");
                             break;
                         }
-
-                        if (by.isEmpty()) {
+                        
+                        String byStr = parts[1].trim();     
+                        if (byStr.isEmpty()) {
                             System.out.println("❗ The deadline time cannot be empty.");
                             System.out.println("👉 Format: deadline <task description> /by <time>");
                             break;

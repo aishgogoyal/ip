@@ -5,6 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.time.LocalDate;
+
 
 public class Storage {
     private final Path filePath;
@@ -70,23 +72,31 @@ public class Storage {
         String desc = parts[2].trim();
 
         Task t;
-        if (type.equals("T")) {
-            t = new Todo(desc);
-        } else if (type.equals("D")) {
-            if (parts.length < 4) return null;
-            t = new Deadline(desc, parts[3].trim());
-        } else if (type.equals("E")) {
-            if (parts.length < 5) return null;
-            t = new Event(desc, parts[3].trim(), parts[4].trim());
-        } else {
-            return null;
-        }
+        try{
+            if (type.equals("T")) {
+                t = new Todo(desc);
 
-        if (done.equals("1")) {
+            } else if (type.equals("D")) {
+                if (parts.length < 4) return null;
+                LocalDate by = LocalDate.parse(parts[3].trim());
+                t = new Deadline(desc, by);
+            
+            } else if (type.equals("E")) {
+                if (parts.length < 5) return null;
+                t = new Event(desc, parts[3].trim(), parts[4].trim());
+            } else {
+            return null;
+            } 
+            
+            if (done.equals("1")) {
             t.markDone();
         }
         return t;
+    } catch (Exception e) {
+        return null;
     }
+}
+    
 
     private String encodeTask(Task t) {
         String done = t.isDone() ? "1" : "0";
