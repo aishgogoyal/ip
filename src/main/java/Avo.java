@@ -33,7 +33,10 @@ public class Avo {
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        ArrayList<Task> tasks = new ArrayList<>();
+
+        // Level 7: load tasks from disk at startup
+        Storage storage = new Storage("data/avo.txt");
+        ArrayList<Task> tasks = storage.load();
 
         System.out.println("Hey there! I'm Avo 🥑");
         System.out.println("How can I help you today?");
@@ -70,6 +73,8 @@ public class Avo {
                         }
 
                         tasks.get(idx).markDone();
+                        storage.save(tasks); // Level 7: save after list changes
+
                         System.out.println("🌟 Task marked as done!");
                         System.out.println("  " + tasks.get(idx));
                     } catch (NumberFormatException e) {
@@ -92,6 +97,8 @@ public class Avo {
                         }
 
                         tasks.get(idx).markNotDone();
+                        storage.save(tasks); // Level 7: save after list changes
+
                         System.out.println("👍 Task marked as not done!");
                         System.out.println("  " + tasks.get(idx));
                     } catch (NumberFormatException e) {
@@ -117,6 +124,8 @@ public class Avo {
 
                     Task t = new Todo(desc);
                     tasks.add(t);
+                    storage.save(tasks); // Level 7: save after list changes
+
                     System.out.println("✅ Task added!");
                     System.out.println("  " + t);
                     System.out.println("📌 Now you have " + tasks.size() + " tasks in the list!");
@@ -134,6 +143,8 @@ public class Avo {
                         }
 
                         Task removed = tasks.remove(idx);
+                        storage.save(tasks); // Level 7: save after list changes
+
                         System.out.println("🗑️ Noted. I've removed this task:");
                         System.out.println("  " + removed);
                         System.out.println("📌 Now you have " + tasks.size() + " tasks in the list.");
@@ -174,6 +185,8 @@ public class Avo {
 
                         Task t = new Deadline(desc, by);
                         tasks.add(t);
+                        storage.save(tasks); // Level 7: save after list changes
+
                         System.out.println("⏰ Deadline added!");
                         System.out.println("  " + t);
                         System.out.println("📌 Now you have " + tasks.size() + " tasks in the list!");
@@ -220,6 +233,8 @@ public class Avo {
 
                         Task t = new Event(desc, from, to);
                         tasks.add(t);
+                        storage.save(tasks); // Level 7: save after list changes
+
                         System.out.println("🎉 Event added!");
                         System.out.println("  " + t);
                         System.out.println("📌 Now you have " + tasks.size() + " tasks in the list!");
