@@ -1,5 +1,9 @@
 import java.util.Scanner;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.time.format.DateTimeParseException;
+import java.time.format.DateTimeFormatter;
+
 
 public class Avo {
 
@@ -27,6 +31,9 @@ public class Avo {
         }
         if (userInput.startsWith("event ")) {
             return CommandType.EVENT;
+        }
+        if (userInput.startsWith("on ")) { 
+            return CommandType.ON;
         }
         return CommandType.UNKNOWN;
     }
@@ -169,15 +176,16 @@ public class Avo {
                         }
 
                         String desc = parts[0].trim();
-                        String by = parts[1].trim();
+                        LocalDate by = LocalDate.parse(parts[1].trim());
 
                         if (desc.isEmpty()) {
                             System.out.println("❗ The task description cannot be empty.");
                             System.out.println("👉 Format: deadline <task description> /by <time>");
                             break;
                         }
-
-                        if (by.isEmpty()) {
+                        
+                        String byStr = parts[1].trim();     
+                        if (byStr.isEmpty()) {
                             System.out.println("❗ The deadline time cannot be empty.");
                             System.out.println("👉 Format: deadline <task description> /by <time>");
                             break;
@@ -243,6 +251,45 @@ public class Avo {
                         System.out.println("👉 Format: event <task description> /from <start> /to <end>");
                     }
                     break;
+                
+                case ON:
+                    try {
+                        String dateStr = userInput.substring(3).trim();
+
+                        if (dateStr.isEmpty()) {
+                            System.out.println("📅 Please include a date.");
+                            System.out.println("👉 Try: on <yyyy-mm-dd>  (e.g., on 2019-10-15)");
+                            break;
+                        }
+
+                        LocalDate target = LocalDate.parse(dateStr);
+                        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM dd yyyy");
+
+                        System.out.println("📌 Here are tasks on " + target.format(fmt) + ":");
+
+                        int count = 0;
+                        for (int i = 0; i < tasks.size(); i++) {
+                            Task t = tasks.get(i);
+
+                            if (t instanceof Deadline) {
+                                Deadline d = (Deadline) t;
+
+                                if (d.getBy().equals(target)) {
+                                    System.out.println((i + 1) + "." + d);
+                                    count++;
+                                }
+                            }
+                        }
+
+                        if (count == 0) {
+                            System.out.println("✨ Nothing due that day. You're free! 😎");
+                        }
+
+                    } catch (DateTimeParseException e) {
+                        System.out.println("❗ That date format looks wrong.");
+                        System.out.println("👉 Try: on <yyyy-mm-dd>  (e.g., on 2019-10-15)");
+                    }
+                    break;
 
                 case UNKNOWN:
                 default:
@@ -256,6 +303,7 @@ public class Avo {
                     System.out.println("   unmark <task number>");
                     System.out.println("   delete <task number>");
                     System.out.println("   bye");
+                    System.out.println("   on <yyyy-mm-dd>");
                     break;
             }
         }
