@@ -32,9 +32,9 @@ application {
 }
 
 shadowJar {
-    archiveBaseName = "avo.Avo"
-    archiveClassifier = null
+    archiveFileName = "Avo.jar"
 }
+
 
 run{
     standardInput = System.in
