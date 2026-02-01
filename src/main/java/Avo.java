@@ -1,11 +1,10 @@
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 
 public class Avo {
 
     private static final String DEFAULT_FILE_PATH = "data/avo.txt";
-    
+
     private static final int MARK_PREFIX_LEN = "mark ".length();
     private static final int UNMARK_PREFIX_LEN = "unmark ".length();
     private static final int DELETE_PREFIX_LEN = "delete ".length();
@@ -16,20 +15,20 @@ public class Avo {
 
     private final Ui ui;
     private final Storage storage;
-    private final ArrayList<Task> tasks;
+    private final TaskList tasks;
 
     public Avo(String filePath) {
         this.ui = new Ui();
         this.storage = new Storage(filePath);
 
-        ArrayList<Task> loaded;
+        TaskList loadedTasks;
         try {
-            loaded = storage.load();
+            loadedTasks = new TaskList(storage.load());
         } catch (RuntimeException e) {
             ui.showLoadingError();
-            loaded = new ArrayList<>();
+            loadedTasks = new TaskList();
         }
-        this.tasks = loaded;
+        this.tasks = loadedTasks;
     }
 
     private static CommandType getCommandType(String userInput) {
@@ -78,7 +77,7 @@ public class Avo {
                 break;
 
             case LIST:
-                ui.showTaskList(tasks);
+                ui.showTaskList(tasks.getAll());
                 break;
 
             case MARK:
@@ -122,13 +121,16 @@ public class Avo {
     private void handleMark(String userInput) {
         try {
             int idx = Integer.parseInt(userInput.substring(MARK_PREFIX_LEN).trim()) - 1;
-            if (idx < 0 || idx >= tasks.size()) {
+
+            if (!tasks.isValidIndex(idx)) {
                 ui.showIndexOutOfRange("mark", tasks.size());
                 return;
             }
-            tasks.get(idx).markDone();
-            storage.save(tasks);
+
+            tasks.markDone(idx);
+            storage.save(tasks.getAll());
             ui.showTaskMarked(tasks.get(idx));
+
         } catch (NumberFormatException e) {
             ui.showIndexNotNumber("mark");
         }
@@ -137,13 +139,16 @@ public class Avo {
     private void handleUnmark(String userInput) {
         try {
             int idx = Integer.parseInt(userInput.substring(UNMARK_PREFIX_LEN).trim()) - 1;
-            if (idx < 0 || idx >= tasks.size()) {
+
+            if (!tasks.isValidIndex(idx)) {
                 ui.showIndexOutOfRange("unmark", tasks.size());
                 return;
             }
-            tasks.get(idx).markNotDone();
-            storage.save(tasks);
+
+            tasks.markNotDone(idx);
+            storage.save(tasks.getAll());
             ui.showTaskUnmarked(tasks.get(idx));
+
         } catch (NumberFormatException e) {
             ui.showIndexNotNumber("unmark");
         }
@@ -152,13 +157,16 @@ public class Avo {
     private void handleDelete(String userInput) {
         try {
             int idx = Integer.parseInt(userInput.substring(DELETE_PREFIX_LEN).trim()) - 1;
-            if (idx < 0 || idx >= tasks.size()) {
+
+            if (!tasks.isValidIndex(idx)) {
                 ui.showIndexOutOfRange("delete", tasks.size());
                 return;
             }
+
             Task removed = tasks.remove(idx);
-            storage.save(tasks);
+            storage.save(tasks.getAll());
             ui.showTaskDeleted(removed, tasks.size());
+
         } catch (NumberFormatException e) {
             ui.showIndexNotNumber("delete");
         }
@@ -176,7 +184,7 @@ public class Avo {
 
         Task t = new Todo(desc);
         tasks.add(t);
-        storage.save(tasks);
+        storage.save(tasks.getAll());
         ui.showTaskAdded(t, tasks.size());
     }
 
@@ -201,8 +209,9 @@ public class Avo {
             LocalDate by = LocalDate.parse(byStr);
             Task t = new Deadline(desc, by);
             tasks.add(t);
-            storage.save(tasks);
+            storage.save(tasks.getAll());
             ui.showTaskAdded(t, tasks.size());
+
         } catch (DateTimeParseException e) {
             ui.showDeadlineDateFormatError();
         }
@@ -239,7 +248,7 @@ public class Avo {
 
         Task t = new Event(desc, from, to);
         tasks.add(t);
-        storage.save(tasks);
+        storage.save(tasks.getAll());
         ui.showTaskAdded(t, tasks.size());
     }
 
@@ -272,6 +281,7 @@ public class Avo {
             if (count == 0) {
                 ui.showNoTasksOnDate();
             }
+
         } catch (DateTimeParseException e) {
             ui.showOnDateFormatError();
         }
@@ -281,5 +291,4 @@ public class Avo {
         new Avo(DEFAULT_FILE_PATH).run();
     }
 }
-
 
