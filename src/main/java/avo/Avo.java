@@ -11,6 +11,10 @@ import avo.task.TaskList;
 import avo.task.Todo;
 import avo.ui.Ui;
 
+/**
+ * Main entry point of the Avo chatbot.
+ * Handles user commands and coordinates UI, storage, and task management.
+ */
 public class Avo {
 
     private static final String DEFAULT_FILE_PATH = "data/avo.txt";
@@ -19,8 +23,12 @@ public class Avo {
     private final Storage storage;
     private final TaskList tasks;
     private final Parser parser;
- 
 
+    /**
+     * Creates an Avo chatbot using the given storage file path.
+     *
+     * @param filePath Relative path to the task storage file.
+     */
     public Avo(String filePath) {
         this.ui = new Ui();
         this.storage = new Storage(filePath);
@@ -37,6 +45,9 @@ public class Avo {
         this.tasks = loadedTasks;
     }
 
+    /**
+     * Runs the chatbot until the user exits.
+     */
     public void run() {
         ui.showWelcome();
 
@@ -83,7 +94,6 @@ public class Avo {
                 handleOn(userInput);
                 break;
 
-            case UNKNOWN:
             default:
                 ui.showUnknownCommand();
                 break;
@@ -93,10 +103,9 @@ public class Avo {
         ui.close();
     }
 
-    /* =======================
-       Command handlers
-       ======================= */
-
+    /**
+     * Marks a task as done.
+     */
     private void handleMark(String userInput) {
         try {
             int idx = parser.parseIndex(userInput, "mark ");
@@ -115,6 +124,9 @@ public class Avo {
         }
     }
 
+    /**
+     * Marks a task as not done.
+     */
     private void handleUnmark(String userInput) {
         try {
             int idx = parser.parseIndex(userInput, "unmark ");
@@ -133,6 +145,9 @@ public class Avo {
         }
     }
 
+    /**
+     * Deletes a task from the list.
+     */
     private void handleDelete(String userInput) {
         try {
             int idx = parser.parseIndex(userInput, "delete ");
@@ -151,6 +166,9 @@ public class Avo {
         }
     }
 
+    /**
+     * Adds a todo task.
+     */
     private void handleTodo(String userInput) {
         String desc = parser.parseTodoDescription(userInput);
 
@@ -165,6 +183,9 @@ public class Avo {
         ui.showTaskAdded(t, tasks.size());
     }
 
+    /**
+     * Adds a deadline task.
+     */
     private void handleDeadline(String userInput) {
         try {
             Parser.DeadlineData data = parser.parseDeadline(userInput);
@@ -184,6 +205,9 @@ public class Avo {
         }
     }
 
+    /**
+     * Adds an event task.
+     */
     private void handleEvent(String userInput) {
         Parser.EventData data = parser.parseEvent(userInput);
 
@@ -198,6 +222,9 @@ public class Avo {
         ui.showTaskAdded(t, tasks.size());
     }
 
+    /**
+     * Shows deadlines occurring on a specific date.
+     */
     private void handleOn(String userInput) {
         try {
             LocalDate target = parser.parseOnDate(userInput);
@@ -230,6 +257,9 @@ public class Avo {
         }
     }
 
+    /**
+     * Starts the chatbot application.
+     */
     public static void main(String[] args) {
         new Avo(DEFAULT_FILE_PATH).run();
     }
