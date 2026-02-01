@@ -5,21 +5,16 @@ public class Avo {
 
     private static final String DEFAULT_FILE_PATH = "data/avo.txt";
 
-    private static final int MARK_PREFIX_LEN = "mark ".length();
-    private static final int UNMARK_PREFIX_LEN = "unmark ".length();
-    private static final int DELETE_PREFIX_LEN = "delete ".length();
-    private static final int TODO_PREFIX_LEN = "todo".length();
-    private static final int DEADLINE_PREFIX_LEN = "deadline ".length();
-    private static final int EVENT_PREFIX_LEN = "event ".length();
-    private static final int ON_PREFIX_LEN = "on".length();
-
     private final Ui ui;
     private final Storage storage;
     private final TaskList tasks;
+    private final Parser parser;
+ 
 
     public Avo(String filePath) {
         this.ui = new Ui();
         this.storage = new Storage(filePath);
+        this.parser = new Parser();
 
         TaskList loadedTasks;
         try {
@@ -28,38 +23,8 @@ public class Avo {
             ui.showLoadingError();
             loadedTasks = new TaskList();
         }
-        this.tasks = loadedTasks;
-    }
 
-    private static CommandType getCommandType(String userInput) {
-        if (userInput.equals("bye")) {
-            return CommandType.BYE;
-        }
-        if (userInput.equals("list")) {
-            return CommandType.LIST;
-        }
-        if (userInput.equals("on") || userInput.startsWith("on ")) {
-            return CommandType.ON;
-        }
-        if (userInput.startsWith("mark ")) {
-            return CommandType.MARK;
-        }
-        if (userInput.startsWith("unmark ")) {
-            return CommandType.UNMARK;
-        }
-        if (userInput.startsWith("delete ")) {
-            return CommandType.DELETE;
-        }
-        if (userInput.startsWith("todo")) {
-            return CommandType.TODO;
-        }
-        if (userInput.startsWith("deadline ")) {
-            return CommandType.DEADLINE;
-        }
-        if (userInput.startsWith("event ")) {
-            return CommandType.EVENT;
-        }
-        return CommandType.UNKNOWN;
+        this.tasks = loadedTasks;
     }
 
     public void run() {
@@ -68,7 +33,7 @@ public class Avo {
         boolean isExit = false;
         while (!isExit) {
             String userInput = ui.readCommand();
-            CommandType command = getCommandType(userInput);
+            CommandType command = parser.parseCommandType(userInput);
 
             switch (command) {
             case BYE:
@@ -118,9 +83,13 @@ public class Avo {
         ui.close();
     }
 
+    /* =======================
+       Command handlers
+       ======================= */
+
     private void handleMark(String userInput) {
         try {
-            int idx = Integer.parseInt(userInput.substring(MARK_PREFIX_LEN).trim()) - 1;
+            int idx = parser.parseIndex(userInput, "mark ");
 
             if (!tasks.isValidIndex(idx)) {
                 ui.showIndexOutOfRange("mark", tasks.size());
@@ -138,7 +107,7 @@ public class Avo {
 
     private void handleUnmark(String userInput) {
         try {
-            int idx = Integer.parseInt(userInput.substring(UNMARK_PREFIX_LEN).trim()) - 1;
+            int idx = parser.parseIndex(userInput, "unmark ");
 
             if (!tasks.isValidIndex(idx)) {
                 ui.showIndexOutOfRange("unmark", tasks.size());
@@ -156,7 +125,7 @@ public class Avo {
 
     private void handleDelete(String userInput) {
         try {
-            int idx = Integer.parseInt(userInput.substring(DELETE_PREFIX_LEN).trim()) - 1;
+            int idx = parser.parseIndex(userInput, "delete ");
 
             if (!tasks.isValidIndex(idx)) {
                 ui.showIndexOutOfRange("delete", tasks.size());
@@ -173,9 +142,7 @@ public class Avo {
     }
 
     private void handleTodo(String userInput) {
-        String desc = userInput.length() > TODO_PREFIX_LEN
-                ? userInput.substring(TODO_PREFIX_LEN).trim()
-                : "";
+        String desc = parser.parseTodoDescription(userInput);
 
         if (desc.isEmpty()) {
             ui.showEmptyTodoError();
@@ -189,25 +156,15 @@ public class Avo {
     }
 
     private void handleDeadline(String userInput) {
-        String rest = userInput.substring(DEADLINE_PREFIX_LEN).trim();
-        String[] parts = rest.split(" /by ", 2);
-
-        if (parts.length < 2) {
-            ui.showDeadlineMissingBy();
-            return;
-        }
-
-        String desc = parts[0].trim();
-        String byStr = parts[1].trim();
-
-        if (desc.isEmpty()) {
-            ui.showDeadlineEmptyDescription();
-            return;
-        }
-
         try {
-            LocalDate by = LocalDate.parse(byStr);
-            Task t = new Deadline(desc, by);
+            Parser.DeadlineData data = parser.parseDeadline(userInput);
+
+            if (data == null) {
+                ui.showDeadlineMissingBy();
+                return;
+            }
+
+            Task t = new Deadline(data.description, data.by);
             tasks.add(t);
             storage.save(tasks.getAll());
             ui.showTaskAdded(t, tasks.size());
@@ -218,52 +175,28 @@ public class Avo {
     }
 
     private void handleEvent(String userInput) {
-        String rest = userInput.substring(EVENT_PREFIX_LEN).trim();
-        String[] first = rest.split(" /from ", 2);
+        Parser.EventData data = parser.parseEvent(userInput);
 
-        if (first.length < 2) {
+        if (data == null) {
             ui.showEventMissingFromTo();
             return;
         }
 
-        String desc = first[0].trim();
-        String[] second = first[1].split(" /to ", 2);
-
-        if (second.length < 2) {
-            ui.showEventMissingFromTo();
-            return;
-        }
-
-        String from = second[0].trim();
-        String to = second[1].trim();
-
-        if (desc.isEmpty()) {
-            ui.showEventEmptyDescription();
-            return;
-        }
-        if (from.isEmpty() || to.isEmpty()) {
-            ui.showEventEmptyTimes();
-            return;
-        }
-
-        Task t = new Event(desc, from, to);
+        Task t = new Event(data.description, data.from, data.to);
         tasks.add(t);
         storage.save(tasks.getAll());
         ui.showTaskAdded(t, tasks.size());
     }
 
     private void handleOn(String userInput) {
-        String dateStr = userInput.length() > ON_PREFIX_LEN
-                ? userInput.substring(ON_PREFIX_LEN).trim()
-                : "";
-
-        if (dateStr.isEmpty()) {
-            ui.showOnMissingDate();
-            return;
-        }
-
         try {
-            LocalDate target = LocalDate.parse(dateStr);
+            LocalDate target = parser.parseOnDate(userInput);
+
+            if (target == null) {
+                ui.showOnMissingDate();
+                return;
+            }
+
             ui.showOnDateHeader(target);
 
             int count = 0;
@@ -291,4 +224,3 @@ public class Avo {
         new Avo(DEFAULT_FILE_PATH).run();
     }
 }
-
