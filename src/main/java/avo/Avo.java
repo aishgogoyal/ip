@@ -2,6 +2,7 @@ package avo;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 
 import avo.storage.Storage;
 import avo.task.Deadline;
@@ -94,6 +95,11 @@ public class Avo {
                 handleOn(userInput);
                 break;
 
+            case FIND:
+                handleFind(userInput);
+                break;
+
+            case UNKNOWN:
             default:
                 ui.showUnknownCommand();
                 break;
@@ -258,8 +264,26 @@ public class Avo {
     }
 
     /**
-     * Starts the chatbot application.
+        * Finds and displays tasks that contain the given keyword.
      */
+    private void handleFind(String userInput) {
+        String keyword = parser.parseFindKeyword(userInput);
+
+        if (keyword.isEmpty()) {
+            ui.showUnknownCommand();
+            return;
+        }
+
+        ArrayList<Task> results = tasks.find(keyword);
+
+        if (results.isEmpty()) {
+            ui.showNoFindResults();
+        } else {
+            ui.showFindResults(results);
+        }
+    }
+
+
     public static void main(String[] args) {
         new Avo(DEFAULT_FILE_PATH).run();
     }

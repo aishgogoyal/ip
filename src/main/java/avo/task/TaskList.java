@@ -59,8 +59,25 @@ public class TaskList {
     }
 
     /**
-     * Marks the task at the given index as done.
+    * Returns tasks whose description contains the keyword.
      */
+    public ArrayList<Task> find(String keyword) {
+        ArrayList<Task> matches = new ArrayList<>();
+
+        for (Task task : tasks) {
+            if (task.getDescription().contains(keyword)) {
+                matches.add(task);
+            }
+        }
+
+        return matches;
+    }
+
+
+    /* ======================
+       State updates
+       ====================== */
+
     public void markDone(int index) {
         tasks.get(index).markDone();
     }

@@ -38,6 +38,9 @@ public class Parser {
         if (userInput.startsWith("event ")) {
             return CommandType.EVENT;
         }
+        if (userInput.startsWith("find ")) {
+            return CommandType.FIND;
+        }
         return CommandType.UNKNOWN;
     }
 
@@ -127,8 +130,20 @@ public class Parser {
     }
 
     /**
-     * Holds parsed deadline data.
-     */
+    * Extracts the keyword from a find command.
+    */
+    public String parseFindKeyword(String userInput) {
+        if (userInput.length() <= "find".length()) {
+            return "";
+        }
+        return userInput.substring("find".length()).trim();
+    }
+
+
+    /* ======================
+       Helper data classes
+       ====================== */
+
     public static class DeadlineData {
         public final String description;
         public final LocalDate by;

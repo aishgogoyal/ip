@@ -228,4 +228,22 @@ public class Ui {
         System.out.println("⚠️ I had trouble loading your saved tasks.");
         System.out.println("📭 Starting with an empty task list instead.");
     }
+
+    /**
+        * Shows matching tasks found by keyword.
+     */
+    public void showFindResults(ArrayList<Task> tasks) {
+        System.out.println("Here are the matching tasks in your list:");
+        for (int i = 0; i < tasks.size(); i++) {
+            System.out.println((i + 1) + "." + tasks.get(i));
+        }
+    }
+
+    /**
+        * Shows message when no matches are found.
+     */
+    public void showNoFindResults() {
+        System.out.println("🔍 No matching tasks found.");
+    }
+
 }
