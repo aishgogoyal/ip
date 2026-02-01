@@ -11,4 +11,4 @@ public enum CommandType  {
     EVENT,
     UNKNOWN,
     ON
-} 
+}
