@@ -1,11 +1,36 @@
-import java.util.Scanner;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.time.format.DateTimeParseException;
-import java.time.format.DateTimeFormatter;
-
+import java.util.ArrayList;
 
 public class Avo {
+
+    private static final String DEFAULT_FILE_PATH = "data/avo.txt";
+    
+    private static final int MARK_PREFIX_LEN = "mark ".length();
+    private static final int UNMARK_PREFIX_LEN = "unmark ".length();
+    private static final int DELETE_PREFIX_LEN = "delete ".length();
+    private static final int TODO_PREFIX_LEN = "todo".length();
+    private static final int DEADLINE_PREFIX_LEN = "deadline ".length();
+    private static final int EVENT_PREFIX_LEN = "event ".length();
+    private static final int ON_PREFIX_LEN = "on".length();
+
+    private final Ui ui;
+    private final Storage storage;
+    private final ArrayList<Task> tasks;
+
+    public Avo(String filePath) {
+        this.ui = new Ui();
+        this.storage = new Storage(filePath);
+
+        ArrayList<Task> loaded;
+        try {
+            loaded = storage.load();
+        } catch (RuntimeException e) {
+            ui.showLoadingError();
+            loaded = new ArrayList<>();
+        }
+        this.tasks = loaded;
+    }
 
     private static CommandType getCommandType(String userInput) {
         if (userInput.equals("bye")) {
@@ -14,17 +39,20 @@ public class Avo {
         if (userInput.equals("list")) {
             return CommandType.LIST;
         }
+        if (userInput.equals("on") || userInput.startsWith("on ")) {
+            return CommandType.ON;
+        }
         if (userInput.startsWith("mark ")) {
             return CommandType.MARK;
         }
         if (userInput.startsWith("unmark ")) {
             return CommandType.UNMARK;
         }
-        if (userInput.startsWith("todo")) {
-            return CommandType.TODO;
-        }
         if (userInput.startsWith("delete ")) {
             return CommandType.DELETE;
+        }
+        if (userInput.startsWith("todo")) {
+            return CommandType.TODO;
         }
         if (userInput.startsWith("deadline ")) {
             return CommandType.DEADLINE;
@@ -32,283 +60,226 @@ public class Avo {
         if (userInput.startsWith("event ")) {
             return CommandType.EVENT;
         }
-        if (userInput.startsWith("on ")) { 
-            return CommandType.ON;
-        }
         return CommandType.UNKNOWN;
     }
 
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
+    public void run() {
+        ui.showWelcome();
 
-        // Level 7: load tasks from disk at startup
-        Storage storage = new Storage("data/avo.txt");
-        ArrayList<Task> tasks = storage.load();
-
-        System.out.println("Hey there! I'm Avo 🥑");
-        System.out.println("How can I help you today?");
-
-        while (true) {
-            if (!sc.hasNextLine()) {
-                break;
-            }
-
-            String userInput = sc.nextLine().trim();
+        boolean isExit = false;
+        while (!isExit) {
+            String userInput = ui.readCommand();
             CommandType command = getCommandType(userInput);
 
             switch (command) {
-                case BYE:
-                    System.out.println("Bye! Avo is going back to sleep 😴");
-                    sc.close();
-                    return;
+            case BYE:
+                ui.showBye();
+                isExit = true;
+                break;
 
-                case LIST:
-                    System.out.println("Here are the tasks in your list:");
-                    for (int i = 0; i < tasks.size(); i++) {
-                        System.out.println((i + 1) + "." + tasks.get(i));
-                    }
-                    break;
+            case LIST:
+                ui.showTaskList(tasks);
+                break;
 
-                case MARK:
-                    try {
-                        int idx = Integer.parseInt(userInput.substring(5).trim()) - 1;
+            case MARK:
+                handleMark(userInput);
+                break;
 
-                        if (idx < 0 || idx >= tasks.size()) {
-                            System.out.println("❗ That task number does not exist.");
-                            System.out.println("👉 Use: mark <task number> (between 1 and " + tasks.size() + ")");
-                            break;
-                        }
+            case UNMARK:
+                handleUnmark(userInput);
+                break;
 
-                        tasks.get(idx).markDone();
-                        storage.save(tasks); // Level 7: save after list changes
+            case DELETE:
+                handleDelete(userInput);
+                break;
 
-                        System.out.println("🌟 Task marked as done!");
-                        System.out.println("  " + tasks.get(idx));
-                    } catch (NumberFormatException e) {
-                        System.out.println("❗ The task number must be a number.");
-                        System.out.println("👉 Format: mark <task number>");
-                    } catch (Exception e) {
-                        System.out.println("❗ Unable to mark task.");
-                        System.out.println("👉 Format: mark <task number>");
-                    }
-                    break;
+            case TODO:
+                handleTodo(userInput);
+                break;
 
-                case UNMARK:
-                    try {
-                        int idx = Integer.parseInt(userInput.substring(7).trim()) - 1;
+            case DEADLINE:
+                handleDeadline(userInput);
+                break;
 
-                        if (idx < 0 || idx >= tasks.size()) {
-                            System.out.println("❗ That task number does not exist.");
-                            System.out.println("👉 Use: unmark <task number> (between 1 and " + tasks.size() + ")");
-                            break;
-                        }
+            case EVENT:
+                handleEvent(userInput);
+                break;
 
-                        tasks.get(idx).markNotDone();
-                        storage.save(tasks); // Level 7: save after list changes
+            case ON:
+                handleOn(userInput);
+                break;
 
-                        System.out.println("👍 Task marked as not done!");
-                        System.out.println("  " + tasks.get(idx));
-                    } catch (NumberFormatException e) {
-                        System.out.println("❗ The task number must be a number.");
-                        System.out.println("👉 Format: unmark <task number>");
-                    } catch (Exception e) {
-                        System.out.println("❗ Unable to unmark task.");
-                        System.out.println("👉 Format: unmark <task number>");
-                    }
-                    break;
-
-                case TODO: {
-                    String desc = "";
-                    if (userInput.length() > 4) {
-                        desc = userInput.substring(4).trim();
-                    }
-
-                    if (desc.isEmpty()) {
-                        System.out.println("❗ A todo must have a description.");
-                        System.out.println("👉 Format: todo <task description>");
-                        break;
-                    }
-
-                    Task t = new Todo(desc);
-                    tasks.add(t);
-                    storage.save(tasks); // Level 7: save after list changes
-
-                    System.out.println("✅ Task added!");
-                    System.out.println("  " + t);
-                    System.out.println("📌 Now you have " + tasks.size() + " tasks in the list!");
-                    break;
-                }
-
-                case DELETE:
-                    try {
-                        int idx = Integer.parseInt(userInput.substring(7).trim()) - 1;
-
-                        if (idx < 0 || idx >= tasks.size()) {
-                            System.out.println("❗ That task number does not exist.");
-                            System.out.println("👉 Use: delete <task number> (between 1 and " + tasks.size() + ")");
-                            break;
-                        }
-
-                        Task removed = tasks.remove(idx);
-                        storage.save(tasks); // Level 7: save after list changes
-
-                        System.out.println("🗑️ Noted. I've removed this task:");
-                        System.out.println("  " + removed);
-                        System.out.println("📌 Now you have " + tasks.size() + " tasks in the list.");
-                    } catch (NumberFormatException e) {
-                        System.out.println("❗ The task number must be a number.");
-                        System.out.println("👉 Format: delete <task number>");
-                    } catch (Exception e) {
-                        System.out.println("❗ Unable to delete task.");
-                        System.out.println("👉 Format: delete <task number>");
-                    }
-                    break;
-
-                case DEADLINE:
-                    try {
-                        String rest = userInput.substring(9).trim();
-                        String[] parts = rest.split(" /by ", 2);
-
-                        if (parts.length < 2) {
-                            System.out.println("❗ A deadline must include a time.");
-                            System.out.println("👉 Format: deadline <task description> /by <time>");
-                            break;
-                        }
-
-                        String desc = parts[0].trim();
-                        LocalDate by = LocalDate.parse(parts[1].trim());
-
-                        if (desc.isEmpty()) {
-                            System.out.println("❗ The task description cannot be empty.");
-                            System.out.println("👉 Format: deadline <task description> /by <time>");
-                            break;
-                        }
-                        
-                        String byStr = parts[1].trim();     
-                        if (byStr.isEmpty()) {
-                            System.out.println("❗ The deadline time cannot be empty.");
-                            System.out.println("👉 Format: deadline <task description> /by <time>");
-                            break;
-                        }
-
-                        Task t = new Deadline(desc, by);
-                        tasks.add(t);
-                        storage.save(tasks); // Level 7: save after list changes
-
-                        System.out.println("⏰ Deadline added!");
-                        System.out.println("  " + t);
-                        System.out.println("📌 Now you have " + tasks.size() + " tasks in the list!");
-                    } catch (Exception e) {
-                        System.out.println("❗ Unable to create deadline.");
-                        System.out.println("👉 Format: deadline <task description> /by <time>");
-                    }
-                    break;
-
-                case EVENT:
-                    try {
-                        String rest = userInput.substring(6).trim();
-                        String[] firstSplit = rest.split(" /from ", 2);
-
-                        if (firstSplit.length < 2) {
-                            System.out.println("❗ An event must include a start time.");
-                            System.out.println("👉 Format: event <task description> /from <start> /to <end>");
-                            break;
-                        }
-
-                        String desc = firstSplit[0].trim();
-                        String[] secondSplit = firstSplit[1].split(" /to ", 2);
-
-                        if (secondSplit.length < 2) {
-                            System.out.println("❗ An event must include an end time.");
-                            System.out.println("👉 Format: event <task description> /from <start> /to <end>");
-                            break;
-                        }
-
-                        String from = secondSplit[0].trim();
-                        String to = secondSplit[1].trim();
-
-                        if (desc.isEmpty()) {
-                            System.out.println("❗ The event description cannot be empty.");
-                            System.out.println("👉 Format: event <task description> /from <start> /to <end>");
-                            break;
-                        }
-
-                        if (from.isEmpty() || to.isEmpty()) {
-                            System.out.println("❗ Event start and end times cannot be empty.");
-                            System.out.println("👉 Format: event <task description> /from <start> /to <end>");
-                            break;
-                        }
-
-                        Task t = new Event(desc, from, to);
-                        tasks.add(t);
-                        storage.save(tasks); // Level 7: save after list changes
-
-                        System.out.println("🎉 Event added!");
-                        System.out.println("  " + t);
-                        System.out.println("📌 Now you have " + tasks.size() + " tasks in the list!");
-                    } catch (Exception e) {
-                        System.out.println("❗ Unable to create event.");
-                        System.out.println("👉 Format: event <task description> /from <start> /to <end>");
-                    }
-                    break;
-                
-                case ON:
-                    try {
-                        String dateStr = userInput.substring(3).trim();
-
-                        if (dateStr.isEmpty()) {
-                            System.out.println("📅 Please include a date.");
-                            System.out.println("👉 Try: on <yyyy-mm-dd>  (e.g., on 2019-10-15)");
-                            break;
-                        }
-
-                        LocalDate target = LocalDate.parse(dateStr);
-                        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM dd yyyy");
-
-                        System.out.println("📌 Here are tasks on " + target.format(fmt) + ":");
-
-                        int count = 0;
-                        for (int i = 0; i < tasks.size(); i++) {
-                            Task t = tasks.get(i);
-
-                            if (t instanceof Deadline) {
-                                Deadline d = (Deadline) t;
-
-                                if (d.getBy().equals(target)) {
-                                    System.out.println((i + 1) + "." + d);
-                                    count++;
-                                }
-                            }
-                        }
-
-                        if (count == 0) {
-                            System.out.println("✨ Nothing due that day. You're free! 😎");
-                        }
-
-                    } catch (DateTimeParseException e) {
-                        System.out.println("❗ That date format looks wrong.");
-                        System.out.println("👉 Try: on <yyyy-mm-dd>  (e.g., on 2019-10-15)");
-                    }
-                    break;
-
-                case UNKNOWN:
-                default:
-                    System.out.println("🤔 I don't understand that command.");
-                    System.out.println("👉 Available commands:");
-                    System.out.println("   todo <task description>");
-                    System.out.println("   deadline <task description> /by <time>");
-                    System.out.println("   event <task description> /from <start> /to <end>");
-                    System.out.println("   list");
-                    System.out.println("   mark <task number>");
-                    System.out.println("   unmark <task number>");
-                    System.out.println("   delete <task number>");
-                    System.out.println("   bye");
-                    System.out.println("   on <yyyy-mm-dd>");
-                    break;
+            case UNKNOWN:
+            default:
+                ui.showUnknownCommand();
+                break;
             }
         }
 
-        sc.close();
+        ui.close();
+    }
+
+    private void handleMark(String userInput) {
+        try {
+            int idx = Integer.parseInt(userInput.substring(MARK_PREFIX_LEN).trim()) - 1;
+            if (idx < 0 || idx >= tasks.size()) {
+                ui.showIndexOutOfRange("mark", tasks.size());
+                return;
+            }
+            tasks.get(idx).markDone();
+            storage.save(tasks);
+            ui.showTaskMarked(tasks.get(idx));
+        } catch (NumberFormatException e) {
+            ui.showIndexNotNumber("mark");
+        }
+    }
+
+    private void handleUnmark(String userInput) {
+        try {
+            int idx = Integer.parseInt(userInput.substring(UNMARK_PREFIX_LEN).trim()) - 1;
+            if (idx < 0 || idx >= tasks.size()) {
+                ui.showIndexOutOfRange("unmark", tasks.size());
+                return;
+            }
+            tasks.get(idx).markNotDone();
+            storage.save(tasks);
+            ui.showTaskUnmarked(tasks.get(idx));
+        } catch (NumberFormatException e) {
+            ui.showIndexNotNumber("unmark");
+        }
+    }
+
+    private void handleDelete(String userInput) {
+        try {
+            int idx = Integer.parseInt(userInput.substring(DELETE_PREFIX_LEN).trim()) - 1;
+            if (idx < 0 || idx >= tasks.size()) {
+                ui.showIndexOutOfRange("delete", tasks.size());
+                return;
+            }
+            Task removed = tasks.remove(idx);
+            storage.save(tasks);
+            ui.showTaskDeleted(removed, tasks.size());
+        } catch (NumberFormatException e) {
+            ui.showIndexNotNumber("delete");
+        }
+    }
+
+    private void handleTodo(String userInput) {
+        String desc = userInput.length() > TODO_PREFIX_LEN
+                ? userInput.substring(TODO_PREFIX_LEN).trim()
+                : "";
+
+        if (desc.isEmpty()) {
+            ui.showEmptyTodoError();
+            return;
+        }
+
+        Task t = new Todo(desc);
+        tasks.add(t);
+        storage.save(tasks);
+        ui.showTaskAdded(t, tasks.size());
+    }
+
+    private void handleDeadline(String userInput) {
+        String rest = userInput.substring(DEADLINE_PREFIX_LEN).trim();
+        String[] parts = rest.split(" /by ", 2);
+
+        if (parts.length < 2) {
+            ui.showDeadlineMissingBy();
+            return;
+        }
+
+        String desc = parts[0].trim();
+        String byStr = parts[1].trim();
+
+        if (desc.isEmpty()) {
+            ui.showDeadlineEmptyDescription();
+            return;
+        }
+
+        try {
+            LocalDate by = LocalDate.parse(byStr);
+            Task t = new Deadline(desc, by);
+            tasks.add(t);
+            storage.save(tasks);
+            ui.showTaskAdded(t, tasks.size());
+        } catch (DateTimeParseException e) {
+            ui.showDeadlineDateFormatError();
+        }
+    }
+
+    private void handleEvent(String userInput) {
+        String rest = userInput.substring(EVENT_PREFIX_LEN).trim();
+        String[] first = rest.split(" /from ", 2);
+
+        if (first.length < 2) {
+            ui.showEventMissingFromTo();
+            return;
+        }
+
+        String desc = first[0].trim();
+        String[] second = first[1].split(" /to ", 2);
+
+        if (second.length < 2) {
+            ui.showEventMissingFromTo();
+            return;
+        }
+
+        String from = second[0].trim();
+        String to = second[1].trim();
+
+        if (desc.isEmpty()) {
+            ui.showEventEmptyDescription();
+            return;
+        }
+        if (from.isEmpty() || to.isEmpty()) {
+            ui.showEventEmptyTimes();
+            return;
+        }
+
+        Task t = new Event(desc, from, to);
+        tasks.add(t);
+        storage.save(tasks);
+        ui.showTaskAdded(t, tasks.size());
+    }
+
+    private void handleOn(String userInput) {
+        String dateStr = userInput.length() > ON_PREFIX_LEN
+                ? userInput.substring(ON_PREFIX_LEN).trim()
+                : "";
+
+        if (dateStr.isEmpty()) {
+            ui.showOnMissingDate();
+            return;
+        }
+
+        try {
+            LocalDate target = LocalDate.parse(dateStr);
+            ui.showOnDateHeader(target);
+
+            int count = 0;
+            for (int i = 0; i < tasks.size(); i++) {
+                Task t = tasks.get(i);
+                if (t instanceof Deadline) {
+                    Deadline d = (Deadline) t;
+                    if (d.getBy().equals(target)) {
+                        ui.showOnMatch(i + 1, d);
+                        count++;
+                    }
+                }
+            }
+
+            if (count == 0) {
+                ui.showNoTasksOnDate();
+            }
+        } catch (DateTimeParseException e) {
+            ui.showOnDateFormatError();
+        }
+    }
+
+    public static void main(String[] args) {
+        new Avo(DEFAULT_FILE_PATH).run();
     }
 }
+
 
