@@ -1,3 +1,5 @@
+package avo;
+
 public enum CommandType  {
     BYE,
     LIST,
