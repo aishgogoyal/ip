@@ -1,13 +1,15 @@
 package avo;
+
 import java.time.LocalDate;
 
-
+/**
+ * Parses user input into command types and structured command data.
+ */
 public class Parser {
 
-    /* ======================
-       Command type
-       ====================== */
-
+    /**
+     * Identifies the command type from user input.
+     */
     public CommandType parseCommandType(String userInput) {
         if (userInput.equals("bye")) {
             return CommandType.BYE;
@@ -39,18 +41,16 @@ public class Parser {
         return CommandType.UNKNOWN;
     }
 
-    /* ======================
-       Index parsing
-       ====================== */
-
+    /**
+     * Parses a 1-based index from a command and converts it to 0-based.
+     */
     public int parseIndex(String userInput, String prefix) {
         return Integer.parseInt(userInput.substring(prefix.length()).trim()) - 1;
     }
 
-    /* ======================
-       Todo parsing
-       ====================== */
-
+    /**
+     * Extracts the description from a todo command.
+     */
     public String parseTodoDescription(String userInput) {
         if (userInput.length() <= "todo".length()) {
             return "";
@@ -58,10 +58,10 @@ public class Parser {
         return userInput.substring("todo".length()).trim();
     }
 
-    /* ======================
-       Deadline parsing
-       ====================== */
-
+    /**
+     * Parses a deadline command.
+     * Returns null if required parts are missing.
+     */
     public DeadlineData parseDeadline(String userInput) {
         String rest = userInput.substring("deadline ".length()).trim();
         String[] parts = rest.split(" /by ", 2);
@@ -81,10 +81,10 @@ public class Parser {
         return new DeadlineData(desc, by);
     }
 
-    /* ======================
-       Event parsing
-       ====================== */
-
+    /**
+     * Parses an event command.
+     * Returns null if required parts are missing.
+     */
     public EventData parseEvent(String userInput) {
         String rest = userInput.substring("event ".length()).trim();
         String[] firstSplit = rest.split(" /from ", 2);
@@ -110,10 +110,9 @@ public class Parser {
         return new EventData(desc, from, to);
     }
 
-    /* ======================
-       ON date parsing
-       ====================== */
-
+    /**
+     * Parses the date from an "on" command.
+     */
     public LocalDate parseOnDate(String userInput) {
         if (userInput.length() <= "on".length()) {
             return null;
@@ -127,10 +126,9 @@ public class Parser {
         return LocalDate.parse(dateStr);
     }
 
-    /* ======================
-       Helper data classes
-       ====================== */
-
+    /**
+     * Holds parsed deadline data.
+     */
     public static class DeadlineData {
         public final String description;
         public final LocalDate by;
@@ -141,6 +139,9 @@ public class Parser {
         }
     }
 
+    /**
+     * Holds parsed event data.
+     */
     public static class EventData {
         public final String description;
         public final String from;
