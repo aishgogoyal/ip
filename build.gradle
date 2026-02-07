@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'application'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'checkstyle'
+
 }
 
 repositories {
@@ -35,6 +37,9 @@ shadowJar {
     archiveFileName = "Avo.jar"
 }
 
+checkstyle {
+    toolVersion = '11.0.0'
+}
 
 run{
     standardInput = System.in

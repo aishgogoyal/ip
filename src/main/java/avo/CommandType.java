@@ -1,6 +1,10 @@
 package avo;
 
-public enum CommandType  {
+/**
+ * Represents the supported command types in Avo.
+ */
+
+public enum CommandType {
     BYE,
     LIST,
     MARK,
@@ -12,4 +16,4 @@ public enum CommandType  {
     UNKNOWN,
     ON,
     FIND
-} 
+}
