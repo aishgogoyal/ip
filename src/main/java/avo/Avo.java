@@ -1,5 +1,7 @@
 package avo;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -25,6 +27,15 @@ public class Avo {
     private final TaskList tasks;
     private final Parser parser;
 
+    private String commandType;
+
+    /**
+     * Creates an Avo chatbot using the default file path.
+     */
+    public Avo() {
+        this(DEFAULT_FILE_PATH);
+    }
+
     /**
      * Creates an Avo chatbot using the given storage file path.
      *
@@ -32,7 +43,10 @@ public class Avo {
      */
     public Avo(String filePath) {
         this.ui = new Ui();
-        this.storage = new Storage(filePath);
+        String actualPath = (filePath == null || filePath.trim().isEmpty())
+        ? DEFAULT_FILE_PATH
+        : filePath;
+        this.storage = new Storage(actualPath);
         this.parser = new Parser();
 
         TaskList loadedTasks;
@@ -44,6 +58,102 @@ public class Avo {
         }
 
         this.tasks = loadedTasks;
+    }
+
+    /**
+     * Generates a response for the user's chat message (GUI calls this).
+     *
+     * @param input User input.
+     * @return Avo's response as a string.
+     */
+    public String getResponse(String input) {
+        String userInput = input.trim();
+        CommandType command = parser.parseCommandType(userInput);
+
+        return captureOutput(() -> {
+            switch (command) {
+            case BYE:
+                commandType = "Bye";
+                ui.showBye();
+                break;
+
+            case LIST:
+                commandType = "List";
+                ui.showTaskList(tasks.getAll());
+                break;
+
+            case MARK:
+                commandType = "Mark";
+                handleMark(userInput);
+                break;
+
+            case UNMARK:
+                commandType = "Unmark";
+                handleUnmark(userInput);
+                break;
+
+            case DELETE:
+                commandType = "Delete";
+                handleDelete(userInput);
+                break;
+
+            case TODO:
+                commandType = "Todo";
+                handleTodo(userInput);
+                break;
+
+            case DEADLINE:
+                commandType = "Deadline";
+                handleDeadline(userInput);
+                break;
+
+            case EVENT:
+                commandType = "Event";
+                handleEvent(userInput);
+                break;
+
+            case ON:
+                commandType = "On";
+                handleOn(userInput);
+                break;
+
+            case FIND:
+                commandType = "Find";
+                handleFind(userInput);
+                break;
+
+            case UNKNOWN:
+            default:
+                commandType = "Unknown";
+                ui.showUnknownCommand();
+                break;
+            }
+        });
+    }
+
+    /**
+     * Returns the last processed command type (GUI uses this).
+     *
+     * @return Command type string.
+     */
+    public String getCommandType() {
+        return commandType;
+    }
+
+    private String captureOutput(Runnable action) {
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream tempOut = new PrintStream(baos);
+        System.setOut(tempOut);
+
+        try {
+            action.run();
+        } finally {
+            System.out.flush();
+            System.setOut(originalOut);
+        }
+
+        return baos.toString().trim();
     }
 
     /**
@@ -264,7 +374,7 @@ public class Avo {
     }
 
     /**
-        * Finds and displays tasks that contain the given keyword.
+     * Finds and displays tasks that contain the given keyword.
      */
     private void handleFind(String userInput) {
         String keyword = parser.parseFindKeyword(userInput);
@@ -282,7 +392,6 @@ public class Avo {
             ui.showFindResults(results);
         }
     }
-
 
     public static void main(String[] args) {
         new Avo(DEFAULT_FILE_PATH).run();
