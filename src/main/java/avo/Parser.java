@@ -144,10 +144,19 @@ public class Parser {
        Helper data classes
        ====================== */
 
+    /**
+     * Holds parsed deadline data.
+     */
     public static class DeadlineData {
         public final String description;
         public final LocalDate by;
 
+        /**
+         * Creates a {@code DeadlineData} object.
+         *
+         * @param description Task description.
+         * @param by Deadline date.
+         */
         public DeadlineData(String description, LocalDate by) {
             this.description = description;
             this.by = by;
@@ -162,10 +171,20 @@ public class Parser {
         public final String from;
         public final String to;
 
+        /**
+         * Creates a {@code EventData} object.
+         *
+         * @param description Event description.
+         * @param from Start time.
+         * @param to End time.
+         */
         public EventData(String description, String from, String to) {
             this.description = description;
             this.from = from;
             this.to = to;
         }
     }
+
+
+
 }
