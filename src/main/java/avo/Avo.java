@@ -5,6 +5,8 @@ import java.io.PrintStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 import avo.storage.Storage;
 import avo.task.Deadline;
@@ -44,8 +46,8 @@ public class Avo {
     public Avo(String filePath) {
         this.ui = new Ui();
         String actualPath = (filePath == null || filePath.trim().isEmpty())
-        ? DEFAULT_FILE_PATH
-        : filePath;
+                ? DEFAULT_FILE_PATH
+                : filePath;
         this.storage = new Storage(actualPath);
         this.parser = new Parser();
 
@@ -70,65 +72,7 @@ public class Avo {
         String userInput = input.trim();
         CommandType command = parser.parseCommandType(userInput);
 
-        return captureOutput(() -> {
-            switch (command) {
-            case BYE:
-                commandType = "Bye";
-                ui.showBye();
-                break;
-
-            case LIST:
-                commandType = "List";
-                ui.showTaskList(tasks.getAll());
-                break;
-
-            case MARK:
-                commandType = "Mark";
-                handleMark(userInput);
-                break;
-
-            case UNMARK:
-                commandType = "Unmark";
-                handleUnmark(userInput);
-                break;
-
-            case DELETE:
-                commandType = "Delete";
-                handleDelete(userInput);
-                break;
-
-            case TODO:
-                commandType = "Todo";
-                handleTodo(userInput);
-                break;
-
-            case DEADLINE:
-                commandType = "Deadline";
-                handleDeadline(userInput);
-                break;
-
-            case EVENT:
-                commandType = "Event";
-                handleEvent(userInput);
-                break;
-
-            case ON:
-                commandType = "On";
-                handleOn(userInput);
-                break;
-
-            case FIND:
-                commandType = "Find";
-                handleFind(userInput);
-                break;
-
-            case UNKNOWN:
-            default:
-                commandType = "Unknown";
-                ui.showUnknownCommand();
-                break;
-            }
-        });
+        return captureOutput(() -> executeCommand(command, userInput));
     }
 
     /**
@@ -166,99 +110,131 @@ public class Avo {
         while (!isExit) {
             String userInput = ui.readCommand();
             CommandType command = parser.parseCommandType(userInput);
-
-            switch (command) {
-            case BYE:
-                ui.showBye();
-                isExit = true;
-                break;
-
-            case LIST:
-                ui.showTaskList(tasks.getAll());
-                break;
-
-            case MARK:
-                handleMark(userInput);
-                break;
-
-            case UNMARK:
-                handleUnmark(userInput);
-                break;
-
-            case DELETE:
-                handleDelete(userInput);
-                break;
-
-            case TODO:
-                handleTodo(userInput);
-                break;
-
-            case DEADLINE:
-                handleDeadline(userInput);
-                break;
-
-            case EVENT:
-                handleEvent(userInput);
-                break;
-
-            case ON:
-                handleOn(userInput);
-                break;
-
-            case FIND:
-                handleFind(userInput);
-                break;
-
-            case UNKNOWN:
-            default:
-                ui.showUnknownCommand();
-                break;
-            }
+            isExit = executeCommand(command, userInput);
         }
 
         ui.close();
     }
 
     /**
-     * Marks a task as done.
+     * Executes a parsed command.
+     *
+     * @param command The command type.
+     * @param userInput The original user input.
+     * @return true if the command should exit the app, false otherwise.
      */
-    private void handleMark(String userInput) {
+    private boolean executeCommand(CommandType command, String userInput) {
+        switch (command) {
+        case BYE:
+            commandType = "Bye";
+            ui.showBye();
+            return true;
+
+        case LIST:
+            commandType = "List";
+            ui.showTaskList(tasks.getAll());
+            return false;
+
+        case MARK:
+            commandType = "Mark";
+            handleMark(userInput);
+            return false;
+
+        case UNMARK:
+            commandType = "Unmark";
+            handleUnmark(userInput);
+            return false;
+
+        case DELETE:
+            commandType = "Delete";
+            handleDelete(userInput);
+            return false;
+
+        case TODO:
+            commandType = "Todo";
+            handleTodo(userInput);
+            return false;
+
+        case DEADLINE:
+            commandType = "Deadline";
+            handleDeadline(userInput);
+            return false;
+
+        case EVENT:
+            commandType = "Event";
+            handleEvent(userInput);
+            return false;
+
+        case ON:
+            commandType = "On";
+            handleOn(userInput);
+            return false;
+
+        case FIND:
+            commandType = "Find";
+            handleFind(userInput);
+            return false;
+
+        case UNKNOWN:
+        default:
+            commandType = "Unknown";
+            ui.showUnknownCommand();
+            return false;
+        }
+    }
+
+    /**
+     * Generic handler for commands that operate on an index without removing tasks
+     * (e.g., mark/unmark).
+     */
+    private void handleIndexCommand(
+            String userInput,
+            String prefix,
+            String actionName,
+            IntConsumer action,
+            Consumer<Task> successUiAction) {
+
         try {
-            int idx = parser.parseIndex(userInput, "mark ");
+            int idx = parser.parseIndex(userInput, prefix);
 
             if (!tasks.isValidIndex(idx)) {
-                ui.showIndexOutOfRange("mark", tasks.size());
+                ui.showIndexOutOfRange(actionName, tasks.size());
                 return;
             }
 
-            tasks.markDone(idx);
+            action.accept(idx);
             storage.save(tasks.getAll());
-            ui.showTaskMarked(tasks.get(idx));
+            successUiAction.accept(tasks.get(idx));
 
         } catch (NumberFormatException e) {
-            ui.showIndexNotNumber("mark");
+            ui.showIndexNotNumber(actionName);
         }
+    }
+
+    /**
+     * Marks a task as done.
+     */
+    private void handleMark(String userInput) {
+        handleIndexCommand(
+                userInput,
+                "mark ",
+                "mark",
+                idx -> tasks.markDone(idx),
+                task -> ui.showTaskMarked(task)
+        );
     }
 
     /**
      * Marks a task as not done.
      */
     private void handleUnmark(String userInput) {
-        try {
-            int idx = parser.parseIndex(userInput, "unmark ");
-
-            if (!tasks.isValidIndex(idx)) {
-                ui.showIndexOutOfRange("unmark", tasks.size());
-                return;
-            }
-
-            tasks.markNotDone(idx);
-            storage.save(tasks.getAll());
-            ui.showTaskUnmarked(tasks.get(idx));
-
-        } catch (NumberFormatException e) {
-            ui.showIndexNotNumber("unmark");
-        }
+        handleIndexCommand(
+                userInput,
+                "unmark ",
+                "unmark",
+                idx -> tasks.markNotDone(idx),
+                task -> ui.showTaskUnmarked(task)
+        );
     }
 
     /**
