@@ -28,6 +28,7 @@ public class Avo {
     private final Storage storage;
     private final TaskList tasks;
     private final Parser parser;
+    private boolean hasShownReminders = false;
 
     private String commandType;
 
@@ -72,8 +73,21 @@ public class Avo {
         String userInput = input.trim();
         CommandType command = parser.parseCommandType(userInput);
 
-        return captureOutput(() -> executeCommand(command, userInput));
-    }
+        return captureOutput(() -> {
+        if (!hasShownReminders) {
+            hasShownReminders = true;
+
+            ArrayList<Deadline> reminders = tasks.getUpcomingDeadlines(2);
+            if (!reminders.isEmpty()) {
+                ui.showReminders(reminders, 2);
+            }
+        }
+
+        executeCommand(command, userInput);
+    });
+}
+
+    
 
     /**
      * Returns the last processed command type (GUI uses this).
@@ -105,6 +119,12 @@ public class Avo {
      */
     public void run() {
         ui.showWelcome();
+
+        ArrayList<Deadline> reminders = tasks.getUpcomingDeadlines(2);
+        if (!reminders.isEmpty()) {
+        ui.showReminders(reminders, 2);
+        }
+        
 
         boolean isExit = false;
         while (!isExit) {
