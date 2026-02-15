@@ -11,6 +11,8 @@ public class Parser {
      * Identifies the command type from user input.
      */
     public CommandType parseCommandType(String userInput) {
+        assert userInput != null : "userInput should not be null";
+
         if (userInput.equals("bye")) {
             return CommandType.BYE;
         }
@@ -48,13 +50,28 @@ public class Parser {
      * Parses a 1-based index from a command and converts it to 0-based.
      */
     public int parseIndex(String userInput, String prefix) {
-        return Integer.parseInt(userInput.substring(prefix.length()).trim()) - 1;
+        assert userInput != null : "userInput should not be null";
+        assert prefix != null : "prefix should not be null";
+        assert userInput.startsWith(prefix)
+                : "userInput should start with the given prefix";
+
+        String indexStr = userInput.substring(prefix.length()).trim();
+        assert !indexStr.isEmpty() : "Index string should not be empty";
+
+        int index = Integer.parseInt(indexStr) - 1;
+        assert index >= 0 : "Parsed index should be non-negative";
+
+        return index;
     }
 
     /**
      * Extracts the description from a todo command.
      */
     public String parseTodoDescription(String userInput) {
+        assert userInput != null : "userInput should not be null";
+        assert userInput.startsWith("todo")
+                : "parseTodoDescription should only be called for todo commands";
+
         if (userInput.length() <= "todo".length()) {
             return "";
         }
@@ -66,6 +83,10 @@ public class Parser {
      * Returns null if required parts are missing.
      */
     public DeadlineData parseDeadline(String userInput) {
+        assert userInput != null : "userInput should not be null";
+        assert userInput.startsWith("deadline ")
+                : "parseDeadline should only be called for deadline commands";
+
         String rest = userInput.substring("deadline ".length()).trim();
         String[] parts = rest.split(" /by ", 2);
 
@@ -81,6 +102,8 @@ public class Parser {
         }
 
         LocalDate by = LocalDate.parse(byStr);
+        assert by != null : "Parsed deadline date should not be null";
+
         return new DeadlineData(desc, by);
     }
 
@@ -89,6 +112,10 @@ public class Parser {
      * Returns null if required parts are missing.
      */
     public EventData parseEvent(String userInput) {
+        assert userInput != null : "userInput should not be null";
+        assert userInput.startsWith("event ")
+                : "parseEvent should only be called for event commands";
+
         String rest = userInput.substring("event ".length()).trim();
         String[] firstSplit = rest.split(" /from ", 2);
 
@@ -117,6 +144,10 @@ public class Parser {
      * Parses the date from an "on" command.
      */
     public LocalDate parseOnDate(String userInput) {
+        assert userInput != null : "userInput should not be null";
+        assert userInput.startsWith("on")
+                : "parseOnDate should only be called for on commands";
+
         if (userInput.length() <= "on".length()) {
             return null;
         }
@@ -126,13 +157,20 @@ public class Parser {
             return null;
         }
 
-        return LocalDate.parse(dateStr);
+        LocalDate date = LocalDate.parse(dateStr);
+        assert date != null : "Parsed date should not be null";
+
+        return date;
     }
 
     /**
-    * Extracts the keyword from a find command.
-    */
+     * Extracts the keyword from a find command.
+     */
     public String parseFindKeyword(String userInput) {
+        assert userInput != null : "userInput should not be null";
+        assert userInput.startsWith("find")
+                : "parseFindKeyword should only be called for find commands";
+
         if (userInput.length() <= "find".length()) {
             return "";
         }
@@ -184,7 +222,6 @@ public class Parser {
             this.to = to;
         }
     }
-
 
 
 }
