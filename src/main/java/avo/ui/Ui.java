@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import avo.task.Task;
+import avo.task.Deadline;
 
 /**
  * Handles all user interaction and output messages.
@@ -244,6 +245,14 @@ public class Ui {
      */
     public void showNoFindResults() {
         System.out.println("🔍 No matching tasks found.");
+    }
+
+    public void showReminders(ArrayList<Deadline> reminders, int days) {
+    System.out.println("🔔 Reminder: Deadlines due within " + days + " day(s):");
+    for (Deadline d : reminders) {
+        System.out.println("  " + d);
+    }
+    System.out.println();
     }
 
 }

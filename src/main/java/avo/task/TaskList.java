@@ -1,5 +1,8 @@
 package avo.task;
 
+import java.time.LocalDate;
+import java.util.stream.Collectors;
+import avo.task.Deadline;
 import java.util.ArrayList;
 
 /**
@@ -71,6 +74,23 @@ public class TaskList {
         }
 
         return matches;
+    }
+
+     /**
+     * Returns deadline tasks due within the given number of days.
+     */
+    public ArrayList<Deadline> getUpcomingDeadlines(int days) {
+        LocalDate today = LocalDate.now();
+        LocalDate threshold = today.plusDays(days);
+
+        return tasks.stream()
+                .filter(task -> task instanceof Deadline)
+                .map(task -> (Deadline) task)
+                .filter(deadline ->
+                        !deadline.isDone()
+                        && !deadline.getBy().isBefore(today)
+                        && !deadline.getBy().isAfter(threshold))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
 
