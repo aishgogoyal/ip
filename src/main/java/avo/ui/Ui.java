@@ -218,6 +218,7 @@ public class Ui {
         System.out.println("   unmark <task number>");
         System.out.println("   delete <task number>");
         System.out.println("   on <yyyy-mm-dd>");
+        System.out.println("   find <keyword>");
         System.out.println("   bye");
     }
 
