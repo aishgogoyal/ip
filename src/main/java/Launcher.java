@@ -1,5 +1,5 @@
-import javafx.application.Application;
 import avo.Main;
+import javafx.application.Application;
 
 /**
  * A launcher class to workaround classpath issues.

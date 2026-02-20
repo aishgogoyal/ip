@@ -83,6 +83,23 @@ public class DialogBox extends HBox {
         return db;
     }
 
+    public static DialogBox getDukeDialog(String text, Image img, String commandType) {
+        if ("Unknown".equals(commandType) || "Error".equals(commandType)) {
+            return getErrorDialog(text, img);
+        }
+        DialogBox db = new DialogBox(text, img);
+        db.flip();
+        db.changeDialogStyle(commandType);
+        return db;
+    }
+
+    public static DialogBox getErrorDialog(String text, Image img) {
+        DialogBox db = new DialogBox(text, img);
+        db.flip();
+        db.setErrorStyle();
+        return db;
+    }
+
     private void changeDialogStyle(String commandType) {
         switch (commandType) {
         case "AddCommand":
@@ -99,10 +116,7 @@ public class DialogBox extends HBox {
         }
     }
 
-    public static DialogBox getDukeDialog(String text, Image img, String commandType) {
-        DialogBox db = new DialogBox(text, img);
-        db.flip();
-        db.changeDialogStyle(commandType);
-        return db;
+    private void setErrorStyle() {
+        dialog.getStyleClass().add("error-label");
     }
 }

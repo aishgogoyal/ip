@@ -1,45 +1,72 @@
 .root {
-    main-color: rgb(237, 255, 242);       /* Create a looked-up color called "main-color" within root. */
-    -fx-background-color: main-color;
-    -fx-background-image: url("../images/background.jpg"); /* Set image */
-    -fx-background-size: stretch;
-    -fx-background-size: 400px 600px;
-    -fx-background-repeat: round;
-
+    background-color: #f8fffc;
+    -fx-background-color: linear-gradient(to bottom right, #f8fffc, #e0f7fa);
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    -fx-font-family: 'Segoe UI', 'Arial', sans-serif;
+    /* Add farm background image */
+    -fx-background-image: url("../images/background.jpg");
+    -fx-background-size: cover;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center center;
 }
 
 .text-field {
-    -fx-background-color: #d9ffe2;
-    -fx-font: 20px "Arial";
+    background-color: #e0ffe8;
+    -fx-background-color: #e0ffe8;
+    font: 18px 'Segoe UI', 'Arial', sans-serif;
+    -fx-font: 18px 'Segoe UI', 'Arial', sans-serif;
+    font-size: 18px;
+    padding: 6px 10px;
+    -fx-padding: 6 10 6 10;
+    -fx-background-radius: 8px;
+    border-radius: 8px;
 }
 
 .button {
-    -fx-background-color: mediumspringgreen;
-    -fx-font: italic bold 16px "Arial";
+    background-color: #00e676;
+    -fx-background-color: #00e676;
+    font: italic bold 16px 'Segoe UI', 'Arial', sans-serif;
+    -fx-font: italic bold 16px 'Segoe UI', 'Arial', sans-serif;
+    font-size: 16px;
+    border-radius: 8px;
+    -fx-background-radius: 8px;
+    color: #fff;
+    -fx-text-fill: #fff;
+    cursor: pointer;
+    -fx-cursor: hand;
 }
 
 .button:hover {
-    -fx-background-color:cyan;
+    background-color: #1de9b6;
+    -fx-background-color: #1de9b6;
+    font-size: 18px;
     -fx-font-size: 18px;
 }
 
 .button:pressed {
-    -fx-background-color:orange;
+    background-color: #ffb300;
+    -fx-background-color: #ffb300;
+    font-size: 20px;
     -fx-font-size: 20px;
 }
 
 .scroll-pane,
 .scroll-pane .viewport {
+    background-color: transparent;
     -fx-background-color: transparent;
 }
 
 .scroll-bar {
-    -fx-font-size: 10px;  /* Change width of scroll bar. */
-    -fx-background-color: main-color;
+    font-size: 10px;
+    -fx-font-size: 10px;
+    background-color: #f8fffc;
+    -fx-background-color: #f8fffc;
 }
 
 .scroll-bar .thumb {
-    -fx-background-color: #ff9cb4;
+    background-color: #b2f7ef;
+    -fx-background-color: #b2f7ef;
+    border-radius: 1em;
     -fx-background-radius: 1em;
 }
 
@@ -47,6 +74,7 @@
 .scroll-bar .increment-button,
 .scroll-bar .decrement-button {
     -fx-pref-height: 0;
+    opacity: 0;
     -fx-opacity: 0;
 }
 

@@ -49,5 +49,6 @@ public class MainWindow extends AnchorPane {
                 DialogBox.getDukeDialog(response, dukeImage, commandType)
         );
         userInput.clear();
+        userInput.requestFocus();
     }
 }
