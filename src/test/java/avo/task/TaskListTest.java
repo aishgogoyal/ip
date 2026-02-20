@@ -43,4 +43,27 @@ public class TaskListTest {
         assertFalse(list.isValidIndex(1));
         assertTrue(list.isValidIndex(0));
     }
+
+    @Test
+    public void testFind() {
+        TaskList list = new TaskList();
+        list.add(new Todo("read book"));
+        list.add(new Todo("buy milk"));
+        list.add(new Todo("read newspaper"));
+        java.util.ArrayList<Task> found = list.find("read");
+        assertEquals(2, found.size());
+        assertTrue(found.get(0).getDescription().contains("read"));
+        assertTrue(found.get(1).getDescription().contains("read"));
+    }
+
+    @Test
+    public void testIsValidIndexAndIsEmpty() {
+        TaskList list = new TaskList();
+        assertTrue(list.isEmpty());
+        assertFalse(list.isValidIndex(0));
+        list.add(new Todo("a"));
+        assertFalse(list.isEmpty());
+        assertTrue(list.isValidIndex(0));
+        assertFalse(list.isValidIndex(1));
+    }
 }
